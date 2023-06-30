@@ -10,6 +10,8 @@ from app.models import CharityProject
 FORMAT = "%Y/%m/%d %H:%M:%S"
 ROW_COUNT = 100
 COLUMN_COUNT = 100
+SHEETS_VERSION = 'v4'
+DRIVE_VERSION = 'v3'
 SPREADSHEET_TITLE = 'Отчет на {date}'
 SPREADSHEET_BODY = dict(
     properties=dict(
@@ -42,7 +44,7 @@ async def spreadsheets_create(
         spreadsheet_body['properties']['title'] = SPREADSHEET_TITLE.format(
             date=datetime.now().strftime(FORMAT)
         )
-    service = await wrapper_services.discover('sheets', 'v4')
+    service = await wrapper_services.discover('sheets', SHEETS_VERSION)
     response = await wrapper_services.as_service_account(
         service.spreadsheets.create(json=spreadsheet_body)
     )
@@ -59,12 +61,12 @@ async def set_user_permissions(
         'role': 'writer',
         'emailAddress': settings.email
     }
-    service = await wrapper_services.discover('drive', 'v3')
+    service = await wrapper_services.discover('drive', DRIVE_VERSION)
     await wrapper_services.as_service_account(
         service.permissions.create(
             fileId=spreadsheetid,
             json=permissions_body,
-            fields="id"
+            fields='id'
         )
     )
 
@@ -74,7 +76,7 @@ async def spreadsheets_update_value(
         projects: List[CharityProject],
         wrapper_services: Aiogoogle
 ) -> None:
-    service = await wrapper_services.discover('sheets', 'v4')
+    service = await wrapper_services.discover('sheets', SHEETS_VERSION)
     table_header = deepcopy(TABLE_HEADER)
     table_header[0][1] = datetime.now().strftime(FORMAT)
     table_values = [
@@ -87,7 +89,7 @@ async def spreadsheets_update_value(
     cols = max(map(len, table_values))
     if rows > ROW_COUNT or cols > COLUMN_COUNT:
         raise ValueError(
-            f'Превышены габариты таблицы. '
+            'Превышены габариты таблицы. '
             f'Сформированно строк {rows}. Допустимо {ROW_COUNT}. '
             f'Сформированно столбцов {cols}. Допустимо {COLUMN_COUNT}. '
         )
